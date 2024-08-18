@@ -25,6 +25,7 @@ ld2420::~ld2420()	//Destructor function
 
 bool ld2420::begin(Stream &radarStream, bool waitForRadar)	{
 	radar_uart_ = &radarStream;		//Set the stream used for the LD2420
+
 	if(debug_uart_ != nullptr)
 	{
 		debug_uart_->println(F("ld2420 started"));
@@ -157,12 +158,14 @@ uint8_t ld2420::movingTargetEnergy()
 
 bool ld2420::read_frame_()
 {
-	if(radar_uart_ -> available())
+int len=radar_uart_ -> available();
+	if(len)
 	{
+//debug_uart_->print(len,DEC);debug_uart_->print(":len\n");
 		if(frame_started_ == false)
 		{
 			uint8_t byte_read_ = radar_uart_ -> read();
-			if(byte_read_ == 0xF4)
+			if(byte_read_ == 0xF4)//engeenering
 			{
 				#ifdef LD2420_DEBUG_DATA
 				if(debug_uart_ != nullptr)
@@ -174,7 +177,7 @@ bool ld2420::read_frame_()
 				frame_started_ = true;
 				ack_frame_ = false;
 			}
-			else if(byte_read_ == 0xFD)
+			else if(byte_read_ == 0xFD)//ack
 			{
 				#ifdef LD2420_DEBUG_COMMANDS
 				if(debug_uart_ != nullptr)
@@ -343,39 +346,8 @@ bool ld2420::parse_data_frame_()
 			print_frame_();
 		}
 		#endif
-		if(radar_data_frame_[6] == 0x01 && radar_data_frame_[7] == 0xAA)	//Engineering mode data
-		{
-			target_type_ = radar_data_frame_[8];
-			#ifdef LD2420_DEBUG_PARSE
-			if(debug_uart_ != nullptr)
-			{
-				debug_uart_->print(F("\nEngineering data - "));
-				if(target_type_ == 0x00)
-				{
-					debug_uart_->print(F("no target"));
-				}
-				else if(target_type_ == 0x01)
-				{
-					debug_uart_->print(F("moving target:"));
-				}
-				else if(target_type_ == 0x02)
-				{
-					debug_uart_->print(F("stationary target:"));
-				}
-				else if(target_type_ == 0x03)
-				{
-					debug_uart_->print(F("moving & stationary targets:"));
-				}
-			}
-			#endif
-			/*
-			 *
-			 *	To-do support engineering mode
-			 *
-			 */
-		}
-		else if(intra_frame_data_length_ == 13 && radar_data_frame_[6] == 0x02 && radar_data_frame_[7] == 0xAA && radar_data_frame_[17] == 0x55 && radar_data_frame_[18] == 0x00)	//Normal target data
-		{
+     if(intra_frame_data_length_ == 13 && radar_data_frame_[6] == 0x02 && radar_data_frame_[7] == 0xAA && radar_data_frame_[17] == 0x55 && radar_data_frame_[18] == 0x00)	//Normal target data
+	 {
 			target_type_ = radar_data_frame_[8];
 			//moving_target_distance_ = radar_data_frame_[9] + (radar_data_frame_[10] << 8);
 			stationary_target_distance_ = radar_data_frame_[9] + (radar_data_frame_[10] << 8);
@@ -654,7 +626,7 @@ bool ld2420::parse_command_frame_()
 			return false;
 		}
 	}
-	else if(intra_frame_data_length_ == 12 && latest_ack_ == 0xA0)
+	else if(intra_frame_data_length_ == (0xC) && latest_ack_ == 0x0)
 	{
 		#ifdef LD2420_DEBUG_COMMANDS
 		if(debug_uart_ != nullptr)
@@ -664,13 +636,14 @@ bool ld2420::parse_command_frame_()
 		#endif
 		if(latest_command_success_)
 		{
-			firmware_major_version = radar_data_frame_[13];
-			firmware_minor_version = radar_data_frame_[12];
+//            memcpy((char*)(radar_data_frame_[17]-radar_data_frame_[10]), (char*)firmware_version, radar_data_frame_[10]);
+			firmware_major_version = radar_data_frame_[13]-0x30;
+/*			firmware_minor_version = radar_data_frame_[12];
 			firmware_bugfix_version = radar_data_frame_[14];
 			firmware_bugfix_version += radar_data_frame_[15]<<8;
 			firmware_bugfix_version += radar_data_frame_[16]<<16;
 			firmware_bugfix_version += radar_data_frame_[17]<<24;
-			radar_uart_last_packet_ = millis();
+*/			radar_uart_last_packet_ = millis();
 			#ifdef LD2420_DEBUG_COMMANDS
 			if(debug_uart_ != nullptr)
 			{

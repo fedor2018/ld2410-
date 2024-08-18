@@ -162,7 +162,7 @@ bool ld2410::read_frame_()
 		if(frame_started_ == false)
 		{
 			uint8_t byte_read_ = radar_uart_ -> read();
-			if(byte_read_ == 0xF4)
+			if(byte_read_ == 0xF4) //engeenering
 			{
 				#ifdef LD2410_DEBUG_DATA
 				if(debug_uart_ != nullptr)
