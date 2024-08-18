@@ -36,6 +36,7 @@ class ld2420	{
 		uint16_t movingTargetDistance();
 		uint8_t movingTargetEnergy();
 		bool requestFirmwareVersion();									//Request the firmware version
+        char firmware_version[8]={0,0,0,0,0,0,0,0};
 		uint8_t firmware_major_version = 0;								//Reported major version
 		uint8_t firmware_minor_version = 0;								//Reported minor version
 		uint32_t firmware_bugfix_version = 0;							//Reported bugfix version (coded as hex)
