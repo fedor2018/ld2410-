@@ -1,5 +1,5 @@
 /*
- * Example sketch to show using configuration commands on the LD2410.
+ * Example sketch to show using configuration commands on the LD2420.
  * 
  * This has been tested on the following platforms...
  * 
@@ -31,8 +31,8 @@
     #elif CONFIG_IDF_TARGET_ESP32C3
       #define MONITOR_SERIAL Serial
       #define RADAR_SERIAL Serial1
-      #define RADAR_RX_PIN 4
-      #define RADAR_TX_PIN 5
+      #define RADAR_RX_PIN 21
+      #define RADAR_TX_PIN 20
     #else 
       #error Target CONFIG_IDF_TARGET is not supported
     #endif
@@ -49,42 +49,41 @@
   #define RADAR_TX_PIN 1
 #endif
 
-#include <ld2410.h>
+#include <ld2420.h>
 
-ld2410 radar;
+ld2420 radar;
 bool engineeringMode = false;
 String command;
 
 void setup(void)
 {
   MONITOR_SERIAL.begin(115200); //Feedback over Serial Monitor
-  delay(500); //Give a while for Serial Monitor to wake up
-  //radar.debug(Serial); //Uncomment to show debug information from the library on the Serial Monitor. By default this does not show sensor reads as they are very frequent.
+  while (!MONITOR_SERIAL) {delay(100);}
+//  delay(100); //Give a while for Serial Monitor to wake up
+  MONITOR_SERIAL.println("START");
+  radar.debug(MONITOR_SERIAL); //Uncomment to show debug information from the library on the Serial Monitor. By default this does not show sensor reads as they are very frequent.
   #if defined(ESP32)
-    RADAR_SERIAL.begin(256000, SERIAL_8N1, RADAR_RX_PIN, RADAR_TX_PIN); //UART for monitoring the radar
+    RADAR_SERIAL.begin(115200, SERIAL_8N1, RADAR_RX_PIN, RADAR_TX_PIN); //UART for monitoring the radar
   #elif defined(__AVR_ATmega32U4__)
     RADAR_SERIAL.begin(256000); //UART for monitoring the radar
   #endif
   delay(500);
-  MONITOR_SERIAL.print(F("\nConnect LD2410 radar TX to GPIO:"));
-  MONITOR_SERIAL.println(RADAR_RX_PIN);
-  MONITOR_SERIAL.print(F("Connect LD2410 radar RX to GPIO:"));
-  MONITOR_SERIAL.println(RADAR_TX_PIN);
-  MONITOR_SERIAL.print(F("LD2410 radar sensor initialising: "));
-  if(radar.begin(RADAR_SERIAL))
+//  MONITOR_SERIAL.print(F("\nConnect LD2420 radar TX to GPIO:"));
+//  MONITOR_SERIAL.println(RADAR_RX_PIN);
+//  MONITOR_SERIAL.print(F("Connect LD2420 radar RX to GPIO:"));
+//  MONITOR_SERIAL.println(RADAR_TX_PIN);
+//  MONITOR_SERIAL.print(F("LD2420 radar sensor initialising: "));
+  if(radar.begin(RADAR_SERIAL, true))
   {
     MONITOR_SERIAL.println(F("OK"));
-    MONITOR_SERIAL.print(F("LD2410 firmware version: "));
-    MONITOR_SERIAL.print(radar.firmware_major_version);
-    MONITOR_SERIAL.print('.');
-    MONITOR_SERIAL.print(radar.firmware_minor_version);
-    MONITOR_SERIAL.print('.');
-    MONITOR_SERIAL.println(radar.firmware_bugfix_version, HEX);
+    MONITOR_SERIAL.print(F("LD2420 firmware version: "));
+    MONITOR_SERIAL.println(radar.firmware_version);
   }
   else
   {
     MONITOR_SERIAL.println(F("not connected"));
   }
+    while(1);
   MONITOR_SERIAL.println(F("Supported commands\nread: read current values from the sensor\nreadconfig: read the configuration from the sensor\nsetmaxvalues <motion gate> <stationary gate> <inactivitytimer>\nsetsensitivity <gate> <motionsensitivity> <stationarysensitivity>\nenableengineeringmode: enable engineering mode\ndisableengineeringmode: disable engineering mode\nrestart: restart the sensor\nreadversion: read firmware version\nfactoryreset: factory reset the sensor\n"));
 }
 
